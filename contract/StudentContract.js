@@ -11,6 +11,8 @@ const StudentList = require('./studentlist.js');
 const Course = require('./course.js');
 const CourseList = require('./courselist.js');
 
+const StudentCourse = require('./StudentCourse.js');
+
 
 /**
  * A custom context provides easy access to list of all Students
@@ -85,7 +87,8 @@ class StudentContract extends Contract {
     }
 
     //course has order is as follows (registererId, courseId, name, term, crs, gpa, registeredCourses, completedCourses)
-    //student has //order is as follows (registererId, studentId, name, term, crs, gpa, registeredCourses, completedCourses)
+    //student has order is as follows (registererId, studentId, name, term, crs, gpa, registeredCourses, completedCourses)
+    //studentCourse has  order (courseId, name, grade, crs, professors)
     async register(ctx,registererId, studentId, courseId) {
 
         // Retrieve course and student
@@ -94,45 +97,34 @@ class StudentContract extends Contract {
         let course = await ctx.courseList.getStudent(courseId);
 
         // half load rubric
-        if (student.getGpa() < 2 && student) {
+        if (student.getGpa() < 2 && getRegisteredCrs() >= 12) {
             throw new Error('student is below 2 gpa, can not register more than 13 crs');
         }
 
-        // First buy moves state from ISSUED to TRADING
-        if (paper.isIssued()) {
-            paper.setTrading();
-        }
+        // create  a replica of the course asset to store in student's asset
+        studentCourse = new StudentCourse(course.getCourseId(),course.getName(), 'U', course.getCreditHours(), course.getProfessors());
+        //add this replica to the student asset
+        student.addRegisteredCourse(studentCourse);
+        //add student asset to registered students in course asset 
+        course.addStudent(student);
+        // Update course and student blockchains
+        await ctx.studentlist.updateStudent(student);
+        await ctx.CourseList.updateCourse(course);
 
-        // Check paper is not already REDEEMED
-        if (paper.isTrading()) {
-            paper.setOwner(newOwner);
-        } else {
-            throw new Error('Paper ' + issuer + paperNumber + ' is not trading. Current state = ' +paper.getCurrentState());
-        }
-
-        // Update the paper
-        await ctx.paperList.updatePaper(paper);
         return paper;
     }
 
-    /**
-     * Redeem commercial paper
-     *
-     * @param {Context} ctx the transaction context
-     * @param {String} issuer commercial paper issuer
-     * @param {Integer} paperNumber paper number for this issuer
-     * @param {String} redeemingOwner redeeming owner of paper
-     * @param {String} redeemDateTime time paper was redeemed
-    */
-    async redeem(ctx, issuer, paperNumber, redeemingOwner, redeemDateTime) {
 
-        let paperKey = CommercialPaper.makeKey([issuer, paperNumber]);
+    async updateMarks(ctx,professorId, studentId, courseId) {
 
-        let paper = await ctx.paperList.getPaper(paperKey);
-
-        // Check paper is not REDEEMED
-        if (paper.isRedeemed()) {
-            throw new Error('Paper ' + issuer + paperNumber + ' already redeemed');
+        // Retrieve course and student
+    
+        let student = await ctx.studentList.getStudent(studentId);
+        let course = await ctx.courseList.getStudent(courseId);
+        professors = course.getProfessors();
+        // Check if this professor is the one teaching the course
+        if (!professors.include(professorId)) {
+            throw new Error('professor doesnt teach this course');
         }
 
         // Verify that the redeemer owns the commercial paper before redeeming it
@@ -143,8 +135,11 @@ class StudentContract extends Contract {
             throw new Error('Redeeming owner does not own paper' + issuer + paperNumber);
         }
 
-        await ctx.paperList.updatePaper(paper);
-        return paper;
+        // Update course and student blockchains
+        await ctx.studentlist.updateStudent(student);
+        await ctx.CourseList.updateCourse(course);
+
+        return student;
     }
 
 }

@@ -6,7 +6,7 @@ class StudentCourse {
 
     constructor(courseId, name, grade, crs, professors) {
     	this.courseId = courseId; this.name = name;
-    	this.grade = grage; this.crs = crs;
+    	this.grade = grade; this.crs = crs;
     	this.professors = professors;
     } // order (courseId, name, grade, crs, professors)
 
@@ -16,6 +16,9 @@ class StudentCourse {
 
     setGrade(grade) {
         this.grade = grade;
+    }
+    getCrs() {
+        return this.crs;
     }
 
 }

@@ -65,10 +65,6 @@ class Student extends State {
         this.registererId = newRegistererId;
     }
 
-    setRegistererId(newRegistererId) {
-        this.registererId = newRegistererId;
-    }
-
     setTerm(termNumber){
         this.term = termNumber;
     }
@@ -87,12 +83,20 @@ class Student extends State {
     getCompletedCourse(){
         return this.completedCourses;
     }
-    getRegisteredCourse(){
+    getRegisteredCourses(){
         return this.registeredCourses;
     }
 
-    
+    getRegisteredCrs(){
+        totalRegisteredCrs = 0;
+        for (i = 0; i < registeredCourses.length; i++) {
 
+            totalRegisteredCrs += registeredCourses[i].getCrs();
+        }
+
+
+        return totalRegisteredCrs;
+    }
 
 
     /**
@@ -151,7 +155,7 @@ class Student extends State {
      * Factory method to create a commercial paper object
      */
     static createStudent(registererId, studentId, name) {
-        return new Student({ registererId, studentId, name, 0, 0, gpa=3, [], [] });
+        return new Student({ registererId, studentId, name, 1, 0, 0, [], [] });
     }
     //order (registererId, studentId, name, term, crs, gpa, registeredCourses, completedCourses)
 

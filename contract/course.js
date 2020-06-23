@@ -51,8 +51,8 @@ class Course extends State {
         this.AdminId = newAdminId;
     }
 
-    addProfessor(professor){
-        this.professors.push(professor);
+    setProfessors(professors){
+        this.professors = professors;
     }
 
     getProfessors(){
